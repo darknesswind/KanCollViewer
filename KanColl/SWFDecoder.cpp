@@ -6,18 +6,19 @@
 
 SWFDecoder::SWFDecoder()
 {
+	test();
 }
 
 
 SWFDecoder::~SWFDecoder()
 {
-	for each (SwfTagHeader* pTag in m_tags)
-		free(pTag);
+	for each (TagObject* pTag in m_tags)
+		delete pTag;
 }
 
 bool SWFDecoder::test()
 {
-	// return open(R"(D:\Game\ShimakazeGo\cache\kcs\resources\swf\ships\aejfywpsegbv.swf)");
+	return open(R"(D:\Game\ShimakazeGo\cache\kcs\resources\swf\ships\aejfywpsegbv.swf)");
 	return true;
 }
 
@@ -82,18 +83,12 @@ bool SWFDecoder::decode(QByteArray& buf)
 	return true;
 }
 
-#define DefaultTagProc()\
-{\
-	SwfRawData* pTag = createTag<SwfRawData>(header, header.length);\
-	stream.readAs(pTag->buf, header.length);\
-	break;\
-}
 #define CreateImageTag(Type)\
 {\
-	Type* pTag = createTag<Type>(stream, header, header.length);\
+	Type* pTag = createTagObj<Type>(stream, header);\
 	if (header.length)\
 	{\
-		m_images[pTag->CharacterID] = pTag->image(header.length);\
+		m_images[pTag->character()] = pTag->image();\
 	}\
 }
 
@@ -115,26 +110,20 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagShowFrame:
 	case tagPlaceObject:
 	case tagRemoveObject:
-		DefaultTagProc();
+		createTagObj<TagUnknown>(stream, header);
 		break;
 	case tagPlaceObject2:
-	{
-		TagPlaceObject2* pTag = createTag<TagPlaceObject2>(header, header.length);
-		stream.readAs((char*)pTag, header.length);
+		createTagObj<TagPlaceObject2>(stream, header);
 		break;
-	}
 	case tagRemoveObject2:
 	case tagPlaceObject3:
-		DefaultTagProc();
+		createTagObj<TagUnknown>(stream, header);
 		break;
 
 	// Chapter 4: Control Tags
 	case tagSetBackgroundColor:
-	{
-		SwfRGB* pTag = createTag<SwfRGB>(header);
-		stream.readAs(*pTag);
+		createTagObj<TagSetBackgroundColor>(stream, header);
 		break;
-	}
 	case tagFrameLabel:
 	case tagProtect:
 	case tagEnd:
@@ -144,27 +133,21 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagEnableDebugger2:
 	case tagScriptLimits:
 	case tagSetTabIndex:
-		DefaultTagProc();
+		createTagObj<TagUnknown>(stream, header);
 		break;
 	case tagFileAttributes:
-	{
-		TagFileAttributes* pTag = createTag<TagFileAttributes>(header);
-		stream.readAs(*pTag);
+		createTagObj<TagFileAttributes>(stream, header);
 		break;
-	}
 	case tagImportAsset2:
 	case tagSymbolClass:
-		DefaultTagProc();
+		createTagObj<TagUnknown>(stream, header);
 		break;
 	case tagMetadata:
-	{
-		SwfString* pTag = createTag<SwfString>(header, header.length);
-		stream.readAs(pTag->str, header.length);
+		createTagObj<TagMetadata>(stream, header);
 		break;
-	}
 	case tagDefineScalingGrid:
 	case tagDefineSceneAndFrameLabelData:
-		DefaultTagProc();
+		createTagObj<TagUnknown>(stream, header);
 		break;
 
 	/************************
@@ -173,17 +156,11 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagDefineShape:
 	case tagDefineShape2:
 	case tagDefineShape3:
-	{
-		TagDefineShape* pTag = createTag<TagDefineShape>(header, header.length + sizeof(TagDefineShape));
-		pTag->fromStream(stream, header.length);
+		createTagObj<TagDefineShape>(stream, header);
 		break;
-	}
 	case tagDefineShape4:
-	{
-		TagDefineShape4* pTag = createTag<TagDefineShape4>(header, header.length + sizeof(TagDefineShape4));
-		pTag->fromStream(stream, header.length);
+		createTagObj<TagDefineShape4>(stream, header);
 		break;
-	}
 
 	// Chapter 8: Bitmaps
 	case tagDefineBits:
@@ -191,9 +168,9 @@ void SWFDecoder::readTag(LByteStream& stream)
 		break;
 	case tagJPEGTables:
 	{
-		TagJPEGTables* pTag = createTag<TagJPEGTables>(stream, header, header.length);
+		TagJPEGTables* pTag = createTagObj<TagJPEGTables>(stream, header);
 		if (header.length)
-			m_jpgeTables = pTag->image(header.length);
+			m_jpgeTables = pTag->image();
 		break;
 	}
 	case tagDefineBitsJPEG2:
@@ -275,7 +252,7 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagUNK:
 	case tagSWFFile:
 	default:
-		DefaultTagProc();
+		createTagObj<TagUnknown>(stream, header);
 		break;
 	}
 	assert(endpos == stream.tell());

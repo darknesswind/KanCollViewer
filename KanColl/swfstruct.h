@@ -190,6 +190,20 @@ struct SwfRGBA
 	UI8 blue;
 	UI8 alpha;
 };
+struct SwfPIX15
+{
+	UI8 reserved : 1;
+	UI8 red : 5;
+	UI8 green : 5;
+	UI8 blue : 5;
+};
+struct SwfPIX24
+{
+	UI8 reserved;
+	UI8 red;
+	UI8 green;
+	UI8 blue;
+};
 
 struct SwfRect
 {
@@ -243,12 +257,8 @@ struct SwfTagHeader : public SwfTagHeaderBase
 
 	void fromStream(LByteStream& stream);
 };
-struct SwfTag : public SwfTagHeader
-{
-	byte tagData[1];
-};
 
-struct TagFileAttributes
+struct TagFileAttributesProp
 {
 	UI32 Reserved2		: 24;
 	UI32 UseNetwork		: 1;
@@ -272,45 +282,7 @@ struct TagDefineSceneAndFrameLabelData
 	UI32 SceneCount;
 };
 
-struct TagDefineBits
-{
-	UI16 CharacterID;
-	UI8 JPEGData[1];
-
-	size_t JPEGDataSize(size_t tagSize) const { return tagSize - sizeof(CharacterID); }
-	QImage image(size_t tagSize) const;
-};
-
-struct TagJPEGTables
-{
-	UI8 JPEGData[1];
-
-	QImage image(size_t tagSize) const;
-};
-
-struct TagDefineBitsJPEG2
-{
-	UI16 CharacterID;
-	UI8 ImageData[1];
-
-	size_t ImageDataSize(size_t tagSize) const { return tagSize - sizeof(CharacterID); }
-	QImage image(size_t tagSize) const;
-	SwfImgType type() const { return checkImgType(ImageData); }
-};
-
-struct TagDefineBitsJPEG3
-{
-	UI16 CharacterID;
-	UI32 AlphaDataOffset;
-	UI8 ImageData[1];
-
-	UI8* BitmapAlphaData() const { return (UI8*)ImageData + AlphaDataOffset; }
-	size_t AlphaDataSize(size_t tagSize) const { return tagSize - AlphaDataOffset - sizeof(CharacterID) - sizeof(AlphaDataOffset); }
-	QImage image(size_t tagSize) const;
-	SwfImgType type() const { return checkImgType(ImageData); }
-};
-
-struct TagDefineBitsLossless
+struct TagDefineBitsLosslessLayout
 {
 	UI16 CharacterID;
 	UI8 BitmapFormat;
@@ -335,64 +307,28 @@ struct TagDefineBitsLossless
 		ftRGB15,
 		ftRGB24
 	};
-
-	QImage image(size_t tagSize) const;
-	size_t BitmapDataSize(size_t tagSize) const { return tagSize - sizeof(UI16) * 3 - sizeof(UI8); }
-	size_t MappedDataSize(size_t tagSize) const { return BitmapDataSize(tagSize) - sizeof(UI8); }
 };
 
-struct TagDefineBitsLossless2 : public TagDefineBitsLossless
+struct TagDefineBitsLossless2Layout : public TagDefineBitsLosslessLayout
 {
 	enum Format
 	{
 		ftRGB32 = 5
 	};
-	QImage image(size_t tagSize) const;
-
-	QImage imageMapped8(size_t tagSize) const;
-	QImage imageRGB32(size_t tagSize) const;
 };
 
-struct TagDefineBitsJPEG4
+struct TagDefineBitsJPEG4Layout
 {
 	UI16 CharacterID;
 	UI32 AlphaDataOffset;
 	UI16 DeblockParam;
 	UI8 ImageData[1];
-
-	UI8* BitmapAlphaData() const { return (UI8*)ImageData + AlphaDataOffset; }
-	size_t AlphaDataSize(size_t tagSize) const { return tagSize - AlphaDataOffset - sizeof(CharacterID) - sizeof(AlphaDataOffset); }
-	QImage image(size_t tagSize) const;
 };
 
 struct TagDefineShapeBase
 {
 	UI16 ShapeId;
 	SwfRect ShapeBounds;
-};
-
-struct TagDefineShape : public TagDefineShapeBase
-{
-	size_t datSize;
-	UI8 Shapes[1];
-
-	void fromStream(LByteStream& stream, size_t tagSize);
-};
-
-struct TagDefineShape4 : public TagDefineShapeBase
-{
-	SwfRect EdgeBounds;
-	struct 
-	{
-		UI8 UsesScalingStrokes		: 1;
-		UI8 UsesNonScalingStrokes	: 1;
-		UI8 UsesFillWindingRule		: 1;
-		UI8 Reserved				: 5;
-	} bits;
-	size_t datSize;
-	UI8 Shapes[1];
-
-	void fromStream(LByteStream& stream, size_t tagSize);
 };
 
 struct TagPlaceObject
@@ -418,9 +354,187 @@ struct TagPlaceObject2Base
 	UI16 Depth;
 };
 
-struct TagPlaceObject2 : public TagPlaceObject2Base
+#pragma pack(pop)
+//////////////////////////////////////////////////////////////////////////
+
+class TagObject
 {
-	UI8 OptionData[1];
+public:
+	TagObject(const SwfTagHeader& header) : m_header(header) {}
+	virtual ~TagObject() = default;
+	virtual void fromStream(LByteStream& stream) = 0;
+	
+	struct Segment
+	{
+		const byte* ptr{ nullptr };
+		size_t size{ 0 };
+		Segment() {}
+		Segment(const byte* _ptr, size_t _size) : ptr(_ptr), size(_size) {}
+	};
+protected:
+	SwfTagHeader m_header;
 };
 
-#pragma pack(pop)
+class TagUnknown : public TagObject
+{
+public:
+	using TagObject::TagObject;
+	void fromStream(LByteStream& stream) override;
+	virtual void parse(LByteStream& stream) {}
+
+protected:
+	std::vector<byte> m_raw;
+};
+
+class TagPlaceObject2 : public TagUnknown
+{
+public:
+	using TagUnknown::TagUnknown;
+	void fromStream(LByteStream& stream) override;
+	
+private:
+	TagPlaceObject2Base* m_prop{ nullptr };
+	Segment m_option;
+};
+
+class TagSetBackgroundColor : public TagObject
+{
+public:
+	using TagObject::TagObject;
+	void fromStream(LByteStream& stream) override;
+
+private:
+	SwfRGB m_rgb{ 0 };
+};
+
+class TagFileAttributes : public TagObject
+{
+public:
+	using TagObject::TagObject;
+	void fromStream(LByteStream& stream) override;
+
+private:
+	TagFileAttributesProp m_prop;
+};
+
+class TagMetadata : public TagObject
+{
+public:
+	using TagObject::TagObject;
+	void fromStream(LByteStream& stream) override;
+
+private:
+	std::string m_str;
+};
+
+class TagDefineShape : public TagUnknown
+{
+public:
+	using TagUnknown::TagUnknown;
+	void parse(LByteStream& stream) override;
+
+private:
+	UI16 m_character;
+	SwfRect m_bounds;
+	Segment m_shapes;
+};
+
+class TagDefineShape4 : public TagUnknown
+{
+public:
+	using TagUnknown::TagUnknown;
+	void parse(LByteStream& stream) override;
+
+private:
+	UI16 m_character;
+	SwfRect m_bounds;
+	SwfRect m_edgeBounds;
+	struct Flags
+	{
+		UI8 UsesScalingStrokes : 1;
+		UI8 UsesNonScalingStrokes : 1;
+		UI8 UsesFillWindingRule : 1;
+		UI8 Reserved : 5;
+	} m_flags;
+	Segment m_shapes;
+
+	static_assert(sizeof(Flags) == sizeof(UI8), "size error");
+};
+
+class TagImageBase : public TagUnknown
+{
+public:
+	using TagUnknown::TagUnknown;
+	UI16 character() const { return m_character; }
+	QImage image() const { return m_image; }
+
+protected:
+	UI16 m_character;
+	QImage m_image;
+};
+
+class TagDefineBits : public TagImageBase
+{
+public:
+	using TagImageBase::TagImageBase;
+	void parse(LByteStream& stream) override;
+};
+
+class TagJPEGTables : public TagImageBase
+{
+public:
+	using TagImageBase::TagImageBase;
+	void parse(LByteStream& stream) override;
+};
+
+class TagDefineBitsJPEG2 : public TagImageBase
+{
+public:
+	using TagImageBase::TagImageBase;
+	void parse(LByteStream& stream) override;
+};
+
+class TagDefineBitsJPEG3 : public TagImageBase
+{
+public:
+	using TagImageBase::TagImageBase;
+	void parse(LByteStream& stream) override;
+};
+
+class TagDefineBitsLossless : public TagImageBase
+{
+public:
+	using TagImageBase::TagImageBase;
+	void parse(LByteStream& stream) override;
+
+	enum Format
+	{
+		ftColorMapped8 = 3,
+		ftRGB15,
+		ftRGB24
+	};
+	static QImage fromColorMapped8(LByteStream& stream, UI16 width, UI16 height);
+	template <typename RGBType>
+	static QImage fromRGB(LByteStream& stream, UI16 width, UI16 height);
+};
+
+class TagDefineBitsLossless2 : public TagImageBase
+{
+public:
+	using TagImageBase::TagImageBase;
+	void parse(LByteStream& stream) override;
+
+	enum Format
+	{
+		ftColorMapped8 = 3,
+		ftRGB32 = 5,
+	};
+	static QImage fromRGB32(LByteStream& stream, UI16 width, UI16 height);
+};
+
+class TagDefineBitsJPEG4 : public TagImageBase
+{
+public:
+	using TagImageBase::TagImageBase;
+	void parse(LByteStream& stream) override;
+};

@@ -5,28 +5,16 @@
 		<DisplayString>{TagType}</DisplayString>
 	</Type>
 
-	<Type Name="SwfTag">
-		<DisplayString Condition="TagType == tagDefineShape">Shape {((TagDefineShape*)tagData)->ShapeId}</DisplayString>
-		<DisplayString>{TagType}</DisplayString>
-		<Expand>
-			<Item Name="length">length</Item>
-			<ExpandedItem Condition="TagType == tagFileAttributes">(TagFileAttributes*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagSetBackgroundColor">(SwfRGB*)tagData</ExpandedItem>
-
-			<ExpandedItem Condition="TagType == tagDefineShape">(TagDefineShape*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineShape2">(TagDefineShape*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineShape3">(TagDefineShape*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineShape4">(TagDefineShape4*)tagData</ExpandedItem>
-
-			<ExpandedItem Condition="TagType == tagPlaceObject2">(TagPlaceObject2*)tagData</ExpandedItem>
-			
-			<ExpandedItem Condition="TagType == tagDefineBits">(TagDefineBits*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagJPEGTables">(TagJPEGTables*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineBitsJPEG2">(TagDefineBitsJPEG2*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineBitsJPEG3">(TagDefineBitsJPEG3*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineBitsLossless">(TagDefineBitsLossless*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineBitsLossless2">(TagDefineBitsLossless2*)tagData</ExpandedItem>
-			<ExpandedItem Condition="TagType == tagDefineBitsJPEG4">(TagDefineBitsJPEG4*)tagData</ExpandedItem>
-	</Expand>
+	<Type Name="TagObject">
+		<DisplayString>{m_header}</DisplayString>
 	</Type>
+
+	<Type Name="TagDefineShape">
+		<DisplayString>Shape {m_character}</DisplayString>
+	</Type>
+
+	<Type Name="TagImageBase">
+		<DisplayString>Image {m_character}</DisplayString>
+	</Type>
+	
 </AutoVisualizer>

@@ -3,6 +3,7 @@
 #include "LByteStream.h"
 #include "LBitsField.h"
 #include "QtZlib/zlib.h"
+#include <cassert>
 
 void SwfRect::fromStream(LByteStream& stream)
 {
@@ -96,28 +97,6 @@ void EncondedU32::fromStream(LByteStream& stream)
 	value = (value & 0x0fffffff) | stream.read<uchar>() << 28;
 }
 
-QImage TagDefineBits::image(size_t tagSize) const
-{
-	return QImage::fromData(JPEGData, JPEGDataSize(tagSize));
-}
-
-QImage TagJPEGTables::image(size_t tagSize) const
-{
-	return QImage::fromData(JPEGData, tagSize);
-}
-
-QImage TagDefineBitsJPEG2::image(size_t tagSize) const
-{
-	UI8* pData = (UI8*)ImageData;
-	size_t szImg = ImageDataSize(tagSize);
-	if (szImg > 4 && *(UI32*)pData == 0xD9FFD8FF)
-	{
-		pData += 4;
-		szImg -= 4;
-	}
-	return QImage::fromData(pData, szImg);
-}
-
 SwfImgType checkImgType(const uchar* pData)
 {
 	const ushort PNG_JPEG = 0xD8FF;
@@ -134,69 +113,151 @@ SwfImgType checkImgType(const uchar* pData)
 		return imgUnknown;
 }
 
-QImage TagDefineBitsJPEG3::image(size_t tagSize) const
+void TagUnknown::fromStream(LByteStream& stream)
 {
-	QImage img = QImage::fromData(ImageData, AlphaDataOffset);
-	if (imgJPEG == checkImgType(ImageData))
-	{
-		size_t alphaSize = AlphaDataSize(tagSize);
-		if (!alphaSize)
-			return img;
+	stream.readTo(m_raw, m_header.length);
+	LByteStream rawStream(m_raw.data(), m_raw.size());
+	parse(rawStream);
+}
 
-		uLongf UncompressedSize = img.width() * img.height();
+void TagPlaceObject2::fromStream(LByteStream& stream)
+{
+	TagUnknown::fromStream(stream);
+	m_prop = (TagPlaceObject2Base*)m_raw.data();
+	size_t optSize = m_header.length - sizeof(TagPlaceObject2Base);
+	if (optSize > 0)
+		m_option = { (byte*)(m_prop + 1), optSize };
+}
+
+void TagSetBackgroundColor::fromStream(LByteStream& stream)
+{
+	stream.readAs(m_rgb);
+}
+
+void TagFileAttributes::fromStream(LByteStream& stream)
+{
+	stream.readAs(m_prop);
+}
+
+void TagMetadata::fromStream(LByteStream& stream)
+{
+	stream.readTo(m_str);
+}
+
+void TagDefineShape::parse(LByteStream& stream)
+{
+	stream.readAs(m_character);
+	m_bounds.fromStream(stream);
+	m_shapes = { stream.current(), stream.remindSize() };
+}
+
+void TagDefineShape4::parse(LByteStream& stream)
+{
+	stream.readAs(m_character);
+	m_bounds.fromStream(stream);
+	m_edgeBounds.fromStream(stream);
+	stream.readAs(m_flags);
+	m_shapes = { stream.current(), stream.remindSize() };
+}
+
+void TagDefineBits::parse(LByteStream& stream)
+{
+	stream.readAs(m_character);
+	m_image = QImage::fromData(stream.current(), stream.remindSize());
+}
+
+void TagJPEGTables::parse(LByteStream& stream)
+{
+	m_character = 0;
+	m_image = QImage::fromData(m_raw.data(), m_raw.size());
+}
+
+void TagDefineBitsJPEG2::parse(LByteStream& stream)
+{
+	stream.readAs(m_character);
+	if (stream.remindSize() > 4 && *(UI32*)stream.current() == 0xD9FFD8FF)
+	{
+		stream.skip(sizeof(UI32));
+	}
+	m_image = QImage::fromData(stream.current(), stream.remindSize());
+}
+
+void TagDefineBitsJPEG3::parse(LByteStream& stream)
+{
+	stream.readAs(m_character);
+	UI32 AlphaDataOffset = stream.read<UI32>();
+	Segment segImageData = { stream.current(), AlphaDataOffset };
+	stream.skip(segImageData.size);
+	Segment segAlphaData = { stream.current(), stream.remindSize() };
+
+	QImage m_image = QImage::fromData(segImageData.ptr, segImageData.size);
+	if (imgJPEG == checkImgType(segImageData.ptr))
+	{
+		if (!segAlphaData.size)
+			return;
+
+		uLongf UncompressedSize = m_image.width() * m_image.height();
 		QByteArray dest(UncompressedSize, 0);
-		int res = uncompress((uchar*)dest.data(), &UncompressedSize, BitmapAlphaData(), alphaSize);
+		int res = uncompress((uchar*)dest.data(), &UncompressedSize, segAlphaData.ptr, segAlphaData.size);
 		if (Z_OK != res)
-			return img;
+			return;
 
 		uchar* pAlpha = (uchar*)dest.data();
-		QImage alphaCh(img.width(), img.height(), QImage::Format_Alpha8);
-		for (int y = 0; y < img.height(); ++y)
+		QImage alphaCh(m_image.width(), m_image.height(), QImage::Format_Alpha8);
+		for (int y = 0; y < m_image.height(); ++y)
 		{
-			for (int x = 0; x < img.width(); ++x)
+			for (int x = 0; x < m_image.width(); ++x)
 			{
 				alphaCh.setPixelColor(x, y, QColor(0, 0, 0, *pAlpha));
 				++pAlpha;
 			}
 		}
-		img.setAlphaChannel(alphaCh);
+		m_image.setAlphaChannel(alphaCh);
 	}
-	return img;
+	else
+	{
+		assert(false);
+	}
 }
 
-QImage TagDefineBitsLossless::image(size_t tagSize) const
+void TagDefineBitsLossless::parse(LByteStream& stream)
 {
-	return QImage();
-}
+	stream.readAs(m_character);
+	UI8 BitmapFormat = stream.read<UI8>();
+	UI16 BitmapWidth = stream.read<UI16>();
+	UI16 BitmapHeight = stream.read<UI16>();;
 
-QImage TagDefineBitsLossless2::image(size_t tagSize) const
-{
 	switch (BitmapFormat)
 	{
- 	case ftColorMapped8:
-		return imageMapped8(tagSize);
+	case ftColorMapped8:
+		m_image = fromColorMapped8(stream, BitmapWidth, BitmapHeight);
 		break;
-	case ftRGB32:
-		return imageRGB32(tagSize);
+	case ftRGB15:
+		m_image = fromRGB<SwfPIX15>(stream, BitmapWidth, BitmapHeight);
+		break;
+	case ftRGB24:
+		m_image = fromRGB<SwfPIX24>(stream, BitmapWidth, BitmapHeight);
+		break;
 	default:
-		DebugBreak();
+		assert(false);
 		break;
 	}
-	return QImage();
 }
 
-QImage TagDefineBitsLossless2::imageMapped8(size_t tagSize) const
+QImage TagDefineBitsLossless::fromColorMapped8(LByteStream& stream, UI16 width, UI16 height)
 {
-	QImage img(BitmapWidth, BitmapHeight, QImage::Format_ARGB32_Premultiplied);
+	UI8 BitmapColorTableSize = stream.read<UI8>();
+	Segment segColorMappedData = { stream.current(), stream.remindSize() };
 
+	QImage img(width, height, QImage::Format_ARGB32_Premultiplied);
 	uLongf UncompressedSize = img.width() * img.height() * sizeof(UI32);
 	QByteArray table(UncompressedSize, 0);
-	int res = uncompress((uchar*)table.data(), &UncompressedSize, mappedDat.ColorMappedData, MappedDataSize(tagSize));
+	int res = uncompress((uchar*)table.data(), &UncompressedSize, segColorMappedData.ptr, segColorMappedData.size);
 	if (Z_OK != res)
 		return img;
 
 	SwfRGBA* pTable = (SwfRGBA*)table.data();
-	UI8* pIndex = (UI8*)(pTable + mappedDat.BitmapColorTableSize + 1);
+	UI8* pIndex = (UI8*)(pTable + BitmapColorTableSize + 1);
 	for (int y = 0; y < img.height(); ++y)
 	{
 		for (int x = 0; x < img.width(); ++x)
@@ -209,13 +270,61 @@ QImage TagDefineBitsLossless2::imageMapped8(size_t tagSize) const
 	return img;
 }
 
-QImage TagDefineBitsLossless2::imageRGB32(size_t tagSize) const
+template <typename RGBType>
+QImage TagDefineBitsLossless::fromRGB(LByteStream& stream, UI16 width, UI16 height)
 {
-	QImage img(BitmapWidth, BitmapHeight, QImage::Format_ARGB32_Premultiplied);
+	Segment segPixelData = { stream.current(), stream.remindSize() };
+
+	QImage img(width, height, QImage::Format_ARGB32_Premultiplied);
 
 	uLongf UncompressedSize = img.width() * img.height() * sizeof(UI32);
 	QByteArray dest(UncompressedSize, 0);
-	int res = uncompress((uchar*)dest.data(), &UncompressedSize, bitmapDat.BitmapPixelData, BitmapDataSize(tagSize));
+	int res = uncompress((uchar*)dest.data(), &UncompressedSize, segPixelData.ptr, segPixelData.size);
+	if (Z_OK != res)
+		return img;
+
+	RGBType* p = (RGBType*)dest.data();
+	for (int y = 0; y < img.height(); ++y)
+	{
+		for (int x = 0; x < img.width(); ++x)
+		{
+			img.setPixelColor(x, y, QColor(p->red, p->green, p->blue));
+			++p;
+		}
+	}
+	return img;
+}
+
+void TagDefineBitsLossless2::parse(LByteStream& stream)
+{
+	stream.readAs(m_character);
+	UI8 BitmapFormat = stream.read<UI8>();
+	UI16 BitmapWidth = stream.read<UI16>();
+	UI16 BitmapHeight = stream.read<UI16>();;
+
+	switch (BitmapFormat)
+	{
+	case ftColorMapped8:
+		m_image = TagDefineBitsLossless::fromColorMapped8(stream, BitmapWidth, BitmapHeight);
+		break;
+	case ftRGB32:
+		m_image = fromRGB32(stream, BitmapWidth, BitmapHeight);
+		break;
+	default:
+		assert(false);
+		break;
+	}
+}
+	
+QImage TagDefineBitsLossless2::fromRGB32(LByteStream& stream, UI16 width, UI16 height)
+{
+	Segment segPixelData = { stream.current(), stream.remindSize() };
+
+	QImage img(width, height, QImage::Format_ARGB32_Premultiplied);
+
+	uLongf UncompressedSize = img.width() * img.height() * sizeof(UI32);
+	QByteArray dest(UncompressedSize, 0);
+	int res = uncompress((uchar*)dest.data(), &UncompressedSize, segPixelData.ptr, segPixelData.size);
 	if (Z_OK != res)
 		return img;
 
@@ -231,54 +340,37 @@ QImage TagDefineBitsLossless2::imageRGB32(size_t tagSize) const
 	return img;
 }
 
-QImage TagDefineBitsJPEG4::image(size_t tagSize) const
+void TagDefineBitsJPEG4::parse(LByteStream& stream)
 {
-	QImage img = QImage::fromData(ImageData, AlphaDataOffset);
-	if (imgJPEG == checkImgType(ImageData))
-	{
-		size_t alphaSize = AlphaDataSize(tagSize);
-		if (!alphaSize)
-			return img;
+	stream.readAs(m_character);
+	UI32 AlphaDataOffset = stream.read<UI32>();
+	UI16 DeblockParam = stream.read<UI16>();
+	Segment segImageData = { stream.current(), AlphaDataOffset };
+	stream.skip(AlphaDataOffset);
+	Segment segAlphaData = { stream.current(), stream.remindSize() };
 
-		uLongf UncompressedSize = img.width() * img.height();
+	m_image = QImage::fromData(segImageData.ptr, segImageData.size);
+	if (imgJPEG == checkImgType(segImageData.ptr))
+	{
+		if (!segAlphaData.size)
+			return;
+
+		uLongf UncompressedSize = m_image.width() * m_image.height();
 		QByteArray dest(UncompressedSize, 0);
-		int res = uncompress((uchar*)dest.data(), &UncompressedSize, BitmapAlphaData(), alphaSize);
+		int res = uncompress((uchar*)dest.data(), &UncompressedSize, segAlphaData.ptr, segAlphaData.size);
 		if (Z_OK != res)
-			return img;
+			return;
 
 		uchar* pAlpha = (uchar*)dest.data();
-		QImage alphaCh(img.width(), img.height(), QImage::Format_Alpha8);
-		for (int y = 0; y < img.height(); ++y)
+		QImage alphaCh(m_image.width(), m_image.height(), QImage::Format_Alpha8);
+		for (int y = 0; y < m_image.height(); ++y)
 		{
-			for (int x = 0; x < img.width(); ++x)
+			for (int x = 0; x < m_image.width(); ++x)
 			{
 				alphaCh.setPixelColor(x, y, QColor(0, 0, 0, *pAlpha));
 				++pAlpha;
 			}
 		}
-		img.setAlphaChannel(alphaCh);
+		m_image.setAlphaChannel(alphaCh);
 	}
-	return img;
-}
-
-void TagDefineShape::fromStream(LByteStream& stream, size_t tagSize)
-{
-	size_t begin = stream.tell();
-	stream.readAs(ShapeId);
-	ShapeBounds.fromStream(stream);
-
-	datSize = tagSize - (stream.tell() - begin);
-	stream.readAs((uchar*)Shapes, datSize);
-}
-
-void TagDefineShape4::fromStream(LByteStream& stream, size_t tagSize)
-{
-	size_t begin = stream.tell();
-	stream.readAs(ShapeId);
-	ShapeBounds.fromStream(stream);
-	EdgeBounds.fromStream(stream);
-	stream.readAs(bits);
-
-	datSize = tagSize - (stream.tell() - begin);
-	stream.readAs((uchar*)Shapes, datSize);
 }

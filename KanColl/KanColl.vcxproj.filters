@@ -1,16 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="GameCache.cpp" />
-    <ClCompile Include="LBitsField.cpp" />
-    <ClCompile Include="LByteStream.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="PreviewWidget.cpp" />
-    <ClCompile Include="KanColl.cpp" />
-    <ClCompile Include="ShipDockWidget.cpp" />
-    <ClCompile Include="stdafx.cpp" />
-    <ClCompile Include="SWFDecoder.cpp" />
-    <ClCompile Include="swfstruct.cpp" />
     <ClCompile Include="GeneratedFiles\qrc_KanColl.cpp">
       <Filter>GeneratedFiles</Filter>
     </ClCompile>
@@ -32,11 +22,38 @@
     <ClCompile Include="GeneratedFiles\Release\moc_ShipDockWidget.cpp">
       <Filter>GeneratedFiles\Release</Filter>
     </ClCompile>
+    <ClCompile Include="LBitsField.cpp">
+      <Filter>src\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="LByteStream.cpp">
+      <Filter>src\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="SWFDecoder.cpp">
+      <Filter>src\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="swfstruct.cpp">
+      <Filter>src\tools</Filter>
+    </ClCompile>
+    <ClCompile Include="GameCache.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="KanColl.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="PreviewWidget.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="ShipDockWidget.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CustomBuild Include="PreviewWidget.h" />
-    <CustomBuild Include="ShipDockWidget.h" />
-    <CustomBuild Include="KanColl.h" />
     <CustomBuild Include="KanColl.ui">
       <Filter>ui</Filter>
     </CustomBuild>
@@ -49,21 +66,44 @@
     <CustomBuild Include="NatvisFile.natvis">
       <Filter>other</Filter>
     </CustomBuild>
-    <CustomBuild Include="GameCache.h" />
     <CustomBuild Include="GeneratedFiles\ui_KanColl.h">
       <Filter>GeneratedFiles</Filter>
     </CustomBuild>
     <CustomBuild Include="GeneratedFiles\ui_ShipDockWidget.h">
       <Filter>GeneratedFiles</Filter>
     </CustomBuild>
-    <CustomBuild Include="LBitsField.h" />
-    <CustomBuild Include="LByteStream.h" />
-    <CustomBuild Include="LFile.h" />
-    <CustomBuild Include="SWFDecoder.h" />
-    <CustomBuild Include="swfstruct.h" />
-    <CustomBuild Include="stdafx.h" />
     <CustomBuild Include="KanColl.user">
       <Filter>other</Filter>
+    </CustomBuild>
+    <CustomBuild Include="LBitsField.h">
+      <Filter>src\tools</Filter>
+    </CustomBuild>
+    <CustomBuild Include="LByteStream.h">
+      <Filter>src\tools</Filter>
+    </CustomBuild>
+    <CustomBuild Include="LFile.h">
+      <Filter>src\tools</Filter>
+    </CustomBuild>
+    <CustomBuild Include="SWFDecoder.h">
+      <Filter>src\tools</Filter>
+    </CustomBuild>
+    <CustomBuild Include="swfstruct.h">
+      <Filter>src\tools</Filter>
+    </CustomBuild>
+    <CustomBuild Include="GameCache.h">
+      <Filter>src</Filter>
+    </CustomBuild>
+    <CustomBuild Include="KanColl.h">
+      <Filter>src</Filter>
+    </CustomBuild>
+    <CustomBuild Include="PreviewWidget.h">
+      <Filter>src</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ShipDockWidget.h">
+      <Filter>src</Filter>
+    </CustomBuild>
+    <CustomBuild Include="stdafx.h">
+      <Filter>src</Filter>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
@@ -81,6 +121,12 @@
     </Filter>
     <Filter Include="other">
       <UniqueIdentifier>{99478a5b-5abb-4a39-9441-258eecfc59c4}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src">
+      <UniqueIdentifier>{ccf4a484-26a8-4407-8470-51bfd87189e6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\tools">
+      <UniqueIdentifier>{8fed837a-1e52-4f8b-b757-f0990aa537e7}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
