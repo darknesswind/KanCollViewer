@@ -28,6 +28,17 @@ void SwfRect::fromStream(LByteStream& stream)
 	stream.skip(nSkip);
 }
 
+QRectF SwfRect::toRect() const
+{
+	const qreal twipPerPx = 20.0;
+	QRectF rect;
+	rect.setLeft(xmin / twipPerPx);
+	rect.setRight(xmax / twipPerPx);
+	rect.setTop(ymin / twipPerPx);
+	rect.setBottom(ymax / twipPerPx);
+	return rect;
+}
+
 void SwfMATRIX::fromStream(LByteStream& stream)
 {
 	int maxbyte = sizeof(SwfMATRIX) + 3;
@@ -40,7 +51,7 @@ void SwfMATRIX::fromStream(LByteStream& stream)
 	HasScale = fields.getUbyte(offset, 1);
 	if (HasScale)
 	{
-		int nbits = fields.getUbyte(offset, sizeWidth);
+		int nbits = fields.getUbyte(offset += 1, sizeWidth);
 		ScaleX.val = fields.getUint(offset += sizeWidth, nbits);
 		ScaleY.val = fields.getUint(offset += nbits, nbits);
 		offset += nbits;
@@ -48,7 +59,7 @@ void SwfMATRIX::fromStream(LByteStream& stream)
 	HasRotate = fields.getUbyte(offset, 1);
 	if (HasRotate)
 	{
-		int nbits = fields.getUbyte(offset, sizeWidth);
+		int nbits = fields.getUbyte(offset += 1, sizeWidth);
 		RotateSkew0.val = fields.getUint(offset += sizeWidth, nbits);
 		RotateSkew1.val = fields.getUint(offset += nbits, nbits);
 		offset += nbits;
@@ -141,7 +152,7 @@ void TagFileAttributes::fromStream(LByteStream& stream)
 
 void TagMetadata::fromStream(LByteStream& stream)
 {
-	stream.readTo(m_str);
+	stream.readTo(m_str, m_header.length);
 }
 
 void TagDefineShape::parse(LByteStream& stream)
@@ -149,6 +160,8 @@ void TagDefineShape::parse(LByteStream& stream)
 	stream.readAs(m_character);
 	m_bounds.fromStream(stream);
 	m_shapes = { stream.current(), stream.remindSize() };
+
+	m_fillStyle.fromStream(stream, m_header.TagType);
 }
 
 void TagDefineShape4::parse(LByteStream& stream)
@@ -158,6 +171,8 @@ void TagDefineShape4::parse(LByteStream& stream)
 	m_edgeBounds.fromStream(stream);
 	stream.readAs(m_flags);
 	m_shapes = { stream.current(), stream.remindSize() };
+
+	m_fillStyle.fromStream(stream, m_header.TagType);
 }
 
 void TagDefineBits::parse(LByteStream& stream)
@@ -190,7 +205,7 @@ void TagDefineBitsJPEG3::parse(LByteStream& stream)
 	stream.skip(segImageData.size);
 	Segment segAlphaData = { stream.current(), stream.remindSize() };
 
-	QImage m_image = QImage::fromData(segImageData.ptr, segImageData.size);
+	m_image = QImage::fromData(segImageData.ptr, segImageData.size);
 	if (imgJPEG == checkImgType(segImageData.ptr))
 	{
 		if (!segAlphaData.size)
@@ -230,7 +245,7 @@ void TagDefineBitsLossless::parse(LByteStream& stream)
 	switch (BitmapFormat)
 	{
 	case ftColorMapped8:
-		m_image = fromColorMapped8(stream, BitmapWidth, BitmapHeight);
+		m_image = fromColorMappedRGB(stream, BitmapWidth, BitmapHeight);
 		break;
 	case ftRGB15:
 		m_image = fromRGB<SwfPIX15>(stream, BitmapWidth, BitmapHeight);
@@ -244,26 +259,30 @@ void TagDefineBitsLossless::parse(LByteStream& stream)
 	}
 }
 
-QImage TagDefineBitsLossless::fromColorMapped8(LByteStream& stream, UI16 width, UI16 height)
+QImage TagDefineBitsLossless::fromColorMappedRGB(LByteStream& stream, UI16 width, UI16 height)
 {
 	UI8 BitmapColorTableSize = stream.read<UI8>();
 	Segment segColorMappedData = { stream.current(), stream.remindSize() };
 
+	if (width % 4 != 0)
+		width = (width / 4 + 1) * 4;
+
 	QImage img(width, height, QImage::Format_ARGB32_Premultiplied);
-	uLongf UncompressedSize = img.width() * img.height() * sizeof(UI32);
+	uLongf UncompressedSize = img.width() * img.height() + (BitmapColorTableSize + 1) * sizeof(SwfRGB);
 	QByteArray table(UncompressedSize, 0);
 	int res = uncompress((uchar*)table.data(), &UncompressedSize, segColorMappedData.ptr, segColorMappedData.size);
 	if (Z_OK != res)
 		return img;
 
-	SwfRGBA* pTable = (SwfRGBA*)table.data();
+	assert(table.size() == UncompressedSize);
+	SwfRGB* pTable = (SwfRGB*)table.data();
 	UI8* pIndex = (UI8*)(pTable + BitmapColorTableSize + 1);
 	for (int y = 0; y < img.height(); ++y)
 	{
 		for (int x = 0; x < img.width(); ++x)
 		{
-			SwfRGBA& clr = pTable[*pIndex];
-			img.setPixelColor(x, y, QColor(clr.red, clr.green, clr.blue, clr.alpha));
+			SwfRGB& clr = pTable[*pIndex];
+			img.setPixelColor(x, y, QColor(clr.red, clr.green, clr.blue));
 			++pIndex;
 		}
 	}
@@ -283,6 +302,7 @@ QImage TagDefineBitsLossless::fromRGB(LByteStream& stream, UI16 width, UI16 heig
 	if (Z_OK != res)
 		return img;
 
+	assert(dest.size() == UncompressedSize);
 	RGBType* p = (RGBType*)dest.data();
 	for (int y = 0; y < img.height(); ++y)
 	{
@@ -305,7 +325,7 @@ void TagDefineBitsLossless2::parse(LByteStream& stream)
 	switch (BitmapFormat)
 	{
 	case ftColorMapped8:
-		m_image = TagDefineBitsLossless::fromColorMapped8(stream, BitmapWidth, BitmapHeight);
+		m_image = fromColorMappedRGBA(stream, BitmapWidth, BitmapHeight);
 		break;
 	case ftRGB32:
 		m_image = fromRGB32(stream, BitmapWidth, BitmapHeight);
@@ -316,6 +336,36 @@ void TagDefineBitsLossless2::parse(LByteStream& stream)
 	}
 }
 	
+QImage TagDefineBitsLossless2::fromColorMappedRGBA(LByteStream& stream, UI16 width, UI16 height)
+{
+	UI8 BitmapColorTableSize = stream.read<UI8>();
+	Segment segColorMappedData = { stream.current(), stream.remindSize() };
+
+	if (width % 4 != 0)
+		width = (width / 4 + 1) * 4;
+
+	QImage img(width, height, QImage::Format_ARGB32_Premultiplied);
+	uLongf UncompressedSize = img.width() * img.height() + (BitmapColorTableSize + 1) * sizeof(SwfRGBA);
+	QByteArray table(UncompressedSize, 0);
+	int res = uncompress((uchar*)table.data(), &UncompressedSize, segColorMappedData.ptr, segColorMappedData.size);
+	if (Z_OK != res)
+		return img;
+
+	assert(table.size() == UncompressedSize);
+	SwfRGBA* pTable = (SwfRGBA*)table.data();
+	UI8* pIndex = (UI8*)(pTable + BitmapColorTableSize + 1);
+	for (int y = 0; y < img.height(); ++y)
+	{
+		for (int x = 0; x < img.width(); ++x)
+		{
+			SwfRGBA& clr = pTable[*pIndex];
+			img.setPixelColor(x, y, QColor(clr.red, clr.green, clr.blue, clr.alpha));
+			++pIndex;
+		}
+	}
+	return img;
+}
+
 QImage TagDefineBitsLossless2::fromRGB32(LByteStream& stream, UI16 width, UI16 height)
 {
 	Segment segPixelData = { stream.current(), stream.remindSize() };
@@ -328,6 +378,7 @@ QImage TagDefineBitsLossless2::fromRGB32(LByteStream& stream, UI16 width, UI16 h
 	if (Z_OK != res)
 		return img;
 
+	assert(dest.size() == UncompressedSize);
 	SwfARGB* p = (SwfARGB*)dest.data();
 	for (int y = 0; y < img.height(); ++y)
 	{
@@ -372,5 +423,52 @@ void TagDefineBitsJPEG4::parse(LByteStream& stream)
 			}
 		}
 		m_image.setAlphaChannel(alphaCh);
+	}
+}
+
+void SwfFillStyle::fromStream(LByteStream& stream, SwfTagType tag)
+{
+	stream.readAs(FillStyleType);
+	if (0 == FillStyleType)
+	{
+		if (tag == tagDefineShape3)
+		{
+			stream.readAs(Color);
+		}
+		else
+		{
+			SwfRGB rgb = stream.read<SwfRGB>();
+			Color.red = rgb.red;
+			Color.green = rgb.green;
+			Color.blue = rgb.blue;
+			Color.alpha = 0xFF;
+		}
+	}
+	else if (isBitmap(FillStyleType))
+	{
+		stream.readAs(bitmap.id);
+		bitmap.matrix.fromStream(stream);
+	}
+	else if (isGradient(FillStyleType))
+	{
+		gradient.GradientMatrix.fromStream(stream);
+		assert(false);
+	}
+	else
+	{
+		assert(false);
+	}
+}
+
+void SwfFillStyleArray::fromStream(LByteStream& stream, SwfTagType tag)
+{
+	UI16 FillStyleCount = stream.read<UI8>();
+	if (tag != tagDefineShape && FillStyleCount == 0xFF)
+		FillStyleCount = stream.read<UI16>();
+
+	FillStyles.resize(FillStyleCount);
+	for (auto iter = FillStyles.begin(); iter != FillStyles.end(); ++iter)
+	{
+		iter->fromStream(stream, tag);
 	}
 }

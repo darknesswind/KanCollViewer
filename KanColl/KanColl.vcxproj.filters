@@ -2,25 +2,25 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="GeneratedFiles\qrc_KanColl.cpp">
-      <Filter>GeneratedFiles</Filter>
+      <Filter>src\GeneratedFiles</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_KanColl.cpp">
-      <Filter>GeneratedFiles\Debug</Filter>
+      <Filter>src\GeneratedFiles\Debug</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_PreviewWidget.cpp">
-      <Filter>GeneratedFiles\Debug</Filter>
+      <Filter>src\GeneratedFiles\Debug</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Debug\moc_ShipDockWidget.cpp">
-      <Filter>GeneratedFiles\Debug</Filter>
+      <Filter>src\GeneratedFiles\Debug</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_KanColl.cpp">
-      <Filter>GeneratedFiles\Release</Filter>
+      <Filter>src\GeneratedFiles\Release</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_PreviewWidget.cpp">
-      <Filter>GeneratedFiles\Release</Filter>
+      <Filter>src\GeneratedFiles\Release</Filter>
     </ClCompile>
     <ClCompile Include="GeneratedFiles\Release\moc_ShipDockWidget.cpp">
-      <Filter>GeneratedFiles\Release</Filter>
+      <Filter>src\GeneratedFiles\Release</Filter>
     </ClCompile>
     <ClCompile Include="LBitsField.cpp">
       <Filter>src\tools</Filter>
@@ -55,10 +55,10 @@
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="KanColl.ui">
-      <Filter>ui</Filter>
+      <Filter>src\ui</Filter>
     </CustomBuild>
     <CustomBuild Include="ShipDockWidget.ui">
-      <Filter>ui</Filter>
+      <Filter>src\ui</Filter>
     </CustomBuild>
     <CustomBuild Include="KanColl.qrc">
       <Filter>other</Filter>
@@ -67,10 +67,10 @@
       <Filter>other</Filter>
     </CustomBuild>
     <CustomBuild Include="GeneratedFiles\ui_KanColl.h">
-      <Filter>GeneratedFiles</Filter>
+      <Filter>src\GeneratedFiles</Filter>
     </CustomBuild>
     <CustomBuild Include="GeneratedFiles\ui_ShipDockWidget.h">
-      <Filter>GeneratedFiles</Filter>
+      <Filter>src\GeneratedFiles</Filter>
     </CustomBuild>
     <CustomBuild Include="KanColl.user">
       <Filter>other</Filter>
@@ -107,18 +107,6 @@
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="GeneratedFiles">
-      <UniqueIdentifier>{fe5177db-7532-4dbd-a45d-792ab1aa0130}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="ui">
-      <UniqueIdentifier>{53e5495f-7900-4553-bb53-5e606ebce6ae}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GeneratedFiles\Debug">
-      <UniqueIdentifier>{f8c396c9-740a-4d0f-9b6d-8bde30499f45}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="GeneratedFiles\Release">
-      <UniqueIdentifier>{1a25beb4-f61c-4d70-b14e-58e189dacd00}</UniqueIdentifier>
-    </Filter>
     <Filter Include="other">
       <UniqueIdentifier>{99478a5b-5abb-4a39-9441-258eecfc59c4}</UniqueIdentifier>
     </Filter>
@@ -127,6 +115,18 @@
     </Filter>
     <Filter Include="src\tools">
       <UniqueIdentifier>{8fed837a-1e52-4f8b-b757-f0990aa537e7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GeneratedFiles">
+      <UniqueIdentifier>{fe5177db-7532-4dbd-a45d-792ab1aa0130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GeneratedFiles\Debug">
+      <UniqueIdentifier>{f8c396c9-740a-4d0f-9b6d-8bde30499f45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\GeneratedFiles\Release">
+      <UniqueIdentifier>{1a25beb4-f61c-4d70-b14e-58e189dacd00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\ui">
+      <UniqueIdentifier>{53e5495f-7900-4553-bb53-5e606ebce6ae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

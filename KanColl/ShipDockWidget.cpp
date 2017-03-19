@@ -34,7 +34,12 @@ void ShipDockWidget::init(GameCache* pCache)
 
 	const QStringList& typeName = m_pCache->shipTypes();
 	m_ui.cmbShipType->addItem(tr("No Filter"));
-	m_ui.cmbShipType->addItems(typeName);
+	m_ui.cmbShipType->addItem(tr("Other"));
+	for (int i = 1; i < typeName.size(); ++i)
+	{
+		QString name = QString("%1 %2").arg(i).arg(typeName[i]);
+		m_ui.cmbShipType->addItem(name);
+	}
 	connect(m_ui.cmbShipType, SIGNAL(currentIndexChanged(int)), this, SLOT(onShipTypeFilter(int)));
 
 	int minWidth = 0;
@@ -126,7 +131,7 @@ void ShipDockWidget::exportImage()
 	ShipImage& imgs = m_pCache->loadShipImage(pItem->file());
 	for (auto iter = imgs.images.begin(); iter != imgs.images.end(); ++iter)
 	{
-		iter->save(QString("%1/%2.png").arg(basePath).arg(iter.key()));
+		iter->img.save(QString("%1/%2.png").arg(basePath).arg(iter.key()));
 	}
 	ShellExecuteW(0, L"open", L"explorer.exe", (WCHAR*)basePath.replace('/', '\\').utf16(), NULL, SW_SHOWNORMAL);
 }

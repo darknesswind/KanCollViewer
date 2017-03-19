@@ -78,44 +78,54 @@ struct RoomImage
 	QPixmap window;
 };
 
+struct AlbumImage
+{
+	enum AlbumImageType
+	{
+		tDetialBg = 141,
+		tTitle = 433,
+		tStatus = 516,
+	};
+};
+
 struct ShipImage
 {
-	enum ImageType
+	enum ShipImageType
 	{
 		tTag = 1,
 		tTagBroken = 3,
 		tCard = 5,
 		tCardBroken = 7,
-		tBook = 9,
-		tBookBroken = 11,
-		tBookFull = 13,
-		tBookFullBroken = 15,
+		tAlbum = 9,
+		tAlbumBroken = 11,
+		tAlbumFull = 13,
+		tAlbumFullBroken = 15,
 		tStand = 17,
 		tStandBroken = 19,
 		tUnk = 21,
 		tUnkBroken = 23,
-		tBookName = 25,
+		tAlbumTitle = 25,
 		tSupply = 27,
 		tSupplyBroken = 29,
 		// enemy
 		teTag = 1,
 		teStand = 3,
 		// book
-		tb6Tag = 1,
-		tb6TagBroken = 3,
-		tb6Book = 5,
-		tb6BookBroken = 7,
-		tb6BookFull = 9,
-		tb6BookFullBroken = 11,
-		tb7BookName = 13,
+		ta6Tag = 1,
+		ta6TagBroken = 3,
+		ta6Album = 5,
+		ta6AlbumBroken = 7,
+		ta6AlbumFull = 9,
+		ta6AlbumFullBroken = 11,
+		ta7AlbumTitle = 13,
 
-		tb5Book = 1,
-		tb5BookBroken = 3,
-		tb5BookFull = 5,
-		tb5BookFullBroken = 7,
-		tb5BookName = 11,
+		ta5Album = 1,
+		ta5AlbumBroken = 3,
+		ta5AlbumFull = 5,
+		ta5AlbumFullBroken = 7,
+		ta5AlbumTitle = 11,
 	};
-	typedef QMap<int, QImage> Images;
+	typedef QMap<int, ImageShape> Images;
 
 	Images images;
 	ShipInfo* pInfo = nullptr;
@@ -130,6 +140,7 @@ public:
 
 	void init();
 
+	QDir cacheDir() { return m_cacheDir; }
 	QDir shipsDir();
 	QDir furnitureDir();
 
@@ -137,6 +148,7 @@ public:
 	const ShipGraphs& shipGraphs() { return m_shipGraphs; }
 	const ShipInfos& shipInfos() { return m_ships; }
 	RoomImage& room() { return m_room; }
+	const QPixmap& album() const { return m_album; }
 
 	const ShipInfo& shipInfo(const QString& fileName);
 	QString resolveShipName(const QString& fileName);
@@ -148,6 +160,7 @@ protected:
 	void loadGameData(const QString& dataPath);
 	void collectShips();
 	void collectRoom();
+	void collectAlbum();
 
 	void loadShipInfo(const QJsonObject& obj);
 	void loadShipGraph(const QJsonObject& obj);
@@ -166,6 +179,7 @@ private:
 	ShipGraphs m_shipGraphs;
 
 	RoomImage m_room;
+	QPixmap m_album;
 	QHash<QString, ShipImage> m_shipImgCache;
 };
 

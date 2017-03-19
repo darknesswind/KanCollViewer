@@ -20,12 +20,15 @@ public slots:
 	void onChangeObject();
 	void onChangeChest();
 
+	void onExportSwf();
+
 	void onShipSelected(const ShipGraphFile& file);
 	void onShipActivated(const ShipGraphFile& file);
 
 private:
 	void initMenu();
 	void initShipDock();
+	void initPreview();
 
 	bool changeFurniture(const QString& type, QPixmap& img);
 

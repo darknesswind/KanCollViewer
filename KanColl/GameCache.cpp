@@ -19,6 +19,7 @@ void GameCache::init()
 	detectCachePath();
 	collectShips();
 	collectRoom();
+	collectAlbum();
 }
 
 void GameCache::detectCachePath()
@@ -272,6 +273,31 @@ void GameCache::collectRoom()
 	m_room.window = loadDefPixmap("window");
 }
 
+void GameCache::collectAlbum()
+{
+	SWFDecoder swf(SWFDecoder::modeImage);
+	swf.imageFilter() =
+	{
+		AlbumImage::tDetialBg,
+		AlbumImage::tTitle,
+		AlbumImage::tStatus
+	};
+
+	QString file = m_cacheDir.filePath("./scenes/AlbumMain.swf");
+	if (!swf.open(file))
+		return;
+
+	const static int s_width = 800;
+	const static int s_height = 480;
+	m_album = QPixmap(s_width, s_height);
+	m_album.fill(Qt::black);
+	
+	QPainter painter(&m_album);
+	painter.drawImage(0, 0, swf.images()[AlbumImage::tDetialBg].img);
+	painter.drawImage(26, 30, swf.images()[AlbumImage::tTitle].img);
+	painter.drawImage(71, 236, swf.images()[AlbumImage::tStatus].img);
+}
+
 bool ShipGraphFile::operator<(const ShipGraphFile& rhs)
 {
 	if (id == rhs.id)
@@ -340,7 +366,7 @@ ShipImage& GameCache::loadShipImage(const ShipGraphFile& file)
 	QDir dir = shipsDir();
 	QString filePath = QString("%1/%2.swf").arg(dir.path(), file.fileName);
 
-	SWFDecoder decoder;
+	SWFDecoder decoder(SWFDecoder::modeShape);
 	decoder.open(filePath);
 
 	ShipImage& ship = m_shipImgCache[file.fileName];

@@ -192,10 +192,10 @@ struct SwfRGBA
 };
 struct SwfPIX15
 {
-	UI8 reserved : 1;
-	UI8 red : 5;
-	UI8 green : 5;
 	UI8 blue : 5;
+	UI8 green : 5;
+	UI8 red : 5;
+	UI8 reserved : 1;
 };
 struct SwfPIX24
 {
@@ -208,12 +208,13 @@ struct SwfPIX24
 struct SwfRect
 {
 	// 5bits -> 0x1F = 31bits
-	int xmin;
-	int xmax;
-	int ymin;
-	int ymax;
+	int xmin = 0;
+	int xmax = 0;
+	int ymin = 0;
+	int ymax = 0;
 	
 	void fromStream(LByteStream& stream);
+	QRectF toRect() const;
 };
 
 struct SwfMATRIX
@@ -354,7 +355,67 @@ struct TagPlaceObject2Base
 	UI16 Depth;
 };
 
+struct SwfGradientBase
+{
+	UI8 SpreadMode : 2;
+	UI8 InterpolationMode : 2;
+	UI8 NumGradients : 4;
+};
 #pragma pack(pop)
+//////////////////////////////////////////////////////////////////////////
+
+struct SwfFillStyle
+{
+	enum Type : UI8
+	{
+		solid = 0,
+		linearGradient = 0x10,
+		radialGradient = 0x12,
+		focalRadialGradient = 0x13,
+
+		repeatingBitmap = 0x40,
+		clippedBitmap  = 0x41,
+		nonSmoothedRepeatingBitmap = 0x42,
+		nonSmoothedClippedBitmap = 0x43
+	};
+	Type FillStyleType;
+	union
+	{
+		SwfRGBA Color;
+		struct
+		{
+			SwfMATRIX GradientMatrix;
+// 			union
+// 			{
+// 				GRADIENT gradient;
+// 				FOCALGRADIENT focalGradient;
+// 			};
+		} gradient;
+		struct  
+		{
+			UI16 id;
+			SwfMATRIX matrix;
+		} bitmap;
+	};
+	static bool isGradient(Type t) { return t & 0x10; }
+	static bool isBitmap(Type t) { return t & 0x40; }
+	void fromStream(LByteStream& stream, SwfTagType tag);
+	bool isGradient() const { return isGradient(FillStyleType); }
+	bool isBitmap() const { return isBitmap(FillStyleType); }
+};
+
+struct SwfFillStyleArray
+{
+	struct Layout
+	{
+		UI8 FillStyleCount;
+		UI16 FillStyleCountExtended; // >= shape2
+		SwfFillStyle FillStyles[1];
+	};
+	std::vector<SwfFillStyle> FillStyles;
+	void fromStream(LByteStream& stream, SwfTagType tag);
+};
+
 //////////////////////////////////////////////////////////////////////////
 
 class TagObject
@@ -433,10 +494,16 @@ public:
 	using TagUnknown::TagUnknown;
 	void parse(LByteStream& stream) override;
 
+	UI16 character() const { return m_character; }
+	const SwfRect& bounds() const { return m_bounds; }
+	const SwfFillStyleArray& fills() const { return m_fillStyle; }
+
 private:
 	UI16 m_character;
 	SwfRect m_bounds;
+
 	Segment m_shapes;
+	SwfFillStyleArray m_fillStyle;
 };
 
 class TagDefineShape4 : public TagUnknown
@@ -444,6 +511,10 @@ class TagDefineShape4 : public TagUnknown
 public:
 	using TagUnknown::TagUnknown;
 	void parse(LByteStream& stream) override;
+
+	UI16 character() const { return m_character; }
+	const SwfRect& bounds() const { return m_bounds; }
+	const SwfFillStyleArray& fills() const { return m_fillStyle; }
 
 private:
 	UI16 m_character;
@@ -456,9 +527,10 @@ private:
 		UI8 UsesFillWindingRule : 1;
 		UI8 Reserved : 5;
 	} m_flags;
-	Segment m_shapes;
-
 	static_assert(sizeof(Flags) == sizeof(UI8), "size error");
+
+	Segment m_shapes;
+	SwfFillStyleArray m_fillStyle;
 };
 
 class TagImageBase : public TagUnknown
@@ -513,7 +585,7 @@ public:
 		ftRGB15,
 		ftRGB24
 	};
-	static QImage fromColorMapped8(LByteStream& stream, UI16 width, UI16 height);
+	static QImage fromColorMappedRGB(LByteStream& stream, UI16 width, UI16 height);
 	template <typename RGBType>
 	static QImage fromRGB(LByteStream& stream, UI16 width, UI16 height);
 };
@@ -529,6 +601,7 @@ public:
 		ftColorMapped8 = 3,
 		ftRGB32 = 5,
 	};
+	static QImage fromColorMappedRGBA(LByteStream& stream, UI16 width, UI16 height);
 	static QImage fromRGB32(LByteStream& stream, UI16 width, UI16 height);
 };
 

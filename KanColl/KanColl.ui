@@ -16,6 +16,27 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <item>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QRadioButton" name="rbHome">
+        <property name="text">
+         <string>Homeport</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="rbAlbum">
+        <property name="text">
+         <string>Album</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
      <widget class="PreviewWidget" name="preview" native="true"/>
     </item>
    </layout>
@@ -40,7 +61,14 @@
     <addaction name="actionChange_Object"/>
     <addaction name="actionChange_Chest"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="actionExportSwf"/>
+   </widget>
    <addaction name="menu_Room"/>
+   <addaction name="menuTools"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <attribute name="toolBarArea">
@@ -126,6 +154,11 @@
     <string>Change &amp;Chest</string>
    </property>
   </action>
+  <action name="actionExportSwf">
+   <property name="text">
+    <string>&amp;Export Image From Swf </string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <customwidgets>
@@ -143,7 +176,7 @@
   </customwidget>
  </customwidgets>
  <resources>
-  <include location="QtGuiApplication1.qrc"/>
+  <include location="KanColl.qrc"/>
  </resources>
  <connections/>
 </ui>

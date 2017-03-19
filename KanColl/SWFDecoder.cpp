@@ -3,8 +3,10 @@
 #include "LFile.h"
 #include "QtZlib/zlib.h"
 #include "LByteStream.h"
+#include "LzmaLib.h"
 
-SWFDecoder::SWFDecoder()
+SWFDecoder::SWFDecoder(Mode mode)
+	: m_mode(mode)
 {
 	test();
 }
@@ -18,7 +20,9 @@ SWFDecoder::~SWFDecoder()
 
 bool SWFDecoder::test()
 {
-	return open(R"(D:\Game\ShimakazeGo\cache\kcs\resources\swf\ships\aejfywpsegbv.swf)");
+// 	return open(R"(D:\Game\ShimakazeGo\cache\kcs\resources\swf\ships\aejfywpsegbv.swf)");
+//  	return open(R"(D:\Game\ShimakazeGo\cache\kcs\PortMain.swf)");
+
 	return true;
 }
 
@@ -36,13 +40,15 @@ bool SWFDecoder::open(const QString& fileName)
 		return false;
 
 	uLongf UncompressedSize = file.read<UI32>();
-	QByteArray buf = file.readAll();
+	QByteArray buf;
 	switch (type)
 	{
 	case swfUncompressed:
+		buf = file.readAll();
 		break;
 	case swfZLib:
 	{
+		buf = file.readAll();
 		QByteArray dest(UncompressedSize, 0);
 		int res = uncompress((uchar*)dest.data(), &UncompressedSize, (uchar*)buf.data(), buf.size());
 		bool bSucc = (Z_OK == res);
@@ -54,7 +60,20 @@ bool SWFDecoder::open(const QString& fileName)
 	}
 	case swfLZMA:
 	{
-		return false;
+		size_t srcLen = file.read<UI32>();
+		uchar prop[LZMA_PROPS_SIZE] = { 0 };
+		file.readAs(prop);
+
+		buf = file.readAll();
+		size_t dstSize = UncompressedSize;
+		QByteArray dest(UncompressedSize, 0);
+		int res = LzmaUncompress((uchar*)dest.data(), &dstSize, (uchar*)buf.data(), &srcLen, prop, LZMA_PROPS_SIZE);
+		bool bSucc = (SZ_OK == res);
+		if (bSucc)
+			buf = dest;
+		else
+			return false;
+		break;
 	}
 	default:
 		return false;
@@ -74,30 +93,27 @@ bool SWFDecoder::decode(QByteArray& buf)
 #ifdef _DEBUG
 // 	for (auto iter = m_images.begin(); iter != m_images.end(); ++iter)
 // 	{
-// 		if (!iter->isNull())
-// 			iter->save(QString(".\\test\\%1.png").arg(iter.key()));
+// 		if (!iter->img.isNull())
+// 			iter->img.save(QString(".\\test\\world\\%1.png").arg(iter.key()));
 // 	}
 // 	if (!m_jpgeTables.isNull())
-// 		m_jpgeTables.save("test\\JPEGTables.jpg");
+// 		m_jpgeTables.save("test\\world\\JPEGTables.jpg");
 #endif // _DEBUG
 	return true;
-}
-
-#define CreateImageTag(Type)\
-{\
-	Type* pTag = createTagObj<Type>(stream, header);\
-	if (header.length)\
-	{\
-		m_images[pTag->character()] = pTag->image();\
-	}\
 }
 
 void SWFDecoder::readTag(LByteStream& stream)
 {
 	SwfTagHeader header;
 	header.fromStream(stream);
-	size_t endpos = stream.tell() + header.length;
+	if (!NeedPaser(header.TagType) ||
+		IsFilterOut(header.TagType, *(UI16*)stream.current()))
+	{
+		stream.skip(header.length);
+		return;
+	}
 
+	size_t endpos = stream.tell() + header.length;
 	switch (header.TagType)
 	{
 	case tagDoAction:
@@ -110,19 +126,19 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagShowFrame:
 	case tagPlaceObject:
 	case tagRemoveObject:
-		createTagObj<TagUnknown>(stream, header);
+		createTag<TagUnknown>(stream, header);
 		break;
 	case tagPlaceObject2:
-		createTagObj<TagPlaceObject2>(stream, header);
+		createTag<TagPlaceObject2>(stream, header);
 		break;
 	case tagRemoveObject2:
 	case tagPlaceObject3:
-		createTagObj<TagUnknown>(stream, header);
+		createTag<TagUnknown>(stream, header);
 		break;
 
 	// Chapter 4: Control Tags
 	case tagSetBackgroundColor:
-		createTagObj<TagSetBackgroundColor>(stream, header);
+		createTag<TagSetBackgroundColor>(stream, header);
 		break;
 	case tagFrameLabel:
 	case tagProtect:
@@ -133,21 +149,21 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagEnableDebugger2:
 	case tagScriptLimits:
 	case tagSetTabIndex:
-		createTagObj<TagUnknown>(stream, header);
+		createTag<TagUnknown>(stream, header);
 		break;
 	case tagFileAttributes:
-		createTagObj<TagFileAttributes>(stream, header);
+		createTag<TagFileAttributes>(stream, header);
 		break;
 	case tagImportAsset2:
 	case tagSymbolClass:
-		createTagObj<TagUnknown>(stream, header);
+		createTag<TagUnknown>(stream, header);
 		break;
 	case tagMetadata:
-		createTagObj<TagMetadata>(stream, header);
+		createTag<TagMetadata>(stream, header);
 		break;
 	case tagDefineScalingGrid:
 	case tagDefineSceneAndFrameLabelData:
-		createTagObj<TagUnknown>(stream, header);
+		createTag<TagUnknown>(stream, header);
 		break;
 
 	/************************
@@ -156,37 +172,55 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagDefineShape:
 	case tagDefineShape2:
 	case tagDefineShape3:
-		createTagObj<TagDefineShape>(stream, header);
+	{
+		TagDefineShape* pTag = createTag<TagDefineShape>(stream, header);
+		auto& fills = pTag->fills().FillStyles;
+		for (auto iter = fills.begin(); iter != fills.end(); ++iter)
+		{
+			if (iter->isBitmap() && !IsFilterOut(tagDefineBits, iter->bitmap.id) &&
+				m_images.find(iter->bitmap.id) != m_images.end())
+				m_images[iter->bitmap.id].rect = pTag->bounds().toRect();
+		}
 		break;
+	}
 	case tagDefineShape4:
-		createTagObj<TagDefineShape4>(stream, header);
+	{
+		TagDefineShape4* pTag = createTag<TagDefineShape4>(stream, header);
+		auto& fills = pTag->fills().FillStyles;
+		for (auto iter = fills.begin(); iter != fills.end(); ++iter)
+		{
+			if (iter->isBitmap() && !IsFilterOut(tagDefineBits, iter->bitmap.id) &&
+				m_images.find(iter->bitmap.id) != m_images.end())
+				m_images[iter->bitmap.id].rect = pTag->bounds().toRect();
+		}
 		break;
+	}
 
 	// Chapter 8: Bitmaps
 	case tagDefineBits:
-		CreateImageTag(TagDefineBits);
+		createImageTag<TagDefineBits>(stream, header);
 		break;
 	case tagJPEGTables:
 	{
-		TagJPEGTables* pTag = createTagObj<TagJPEGTables>(stream, header);
+		TagJPEGTables* pTag = createTag<TagJPEGTables>(stream, header);
 		if (header.length)
 			m_jpgeTables = pTag->image();
 		break;
 	}
 	case tagDefineBitsJPEG2:
-		CreateImageTag(TagDefineBitsJPEG2);
+		createImageTag<TagDefineBitsJPEG2>(stream, header);
 		break;
 	case tagDefineBitsJPEG3:
-		CreateImageTag(TagDefineBitsJPEG3);
+		createImageTag<TagDefineBitsJPEG3>(stream, header);
 		break;
 	case tagDefineBitsLossless:
-		CreateImageTag(TagDefineBitsLossless);
+		createImageTag<TagDefineBitsLossless>(stream, header);
 		break;
 	case tagDefineBitsLossless2:
-		CreateImageTag(TagDefineBitsLossless2);
+		createImageTag<TagDefineBitsLossless2>(stream, header);
 		break;
 	case tagDefineBitsJPEG4:
-		CreateImageTag(TagDefineBitsJPEG4);
+		createImageTag<TagDefineBitsJPEG4>(stream, header);
 		break;
 
 	/************************
@@ -252,8 +286,55 @@ void SWFDecoder::readTag(LByteStream& stream)
 	case tagUNK:
 	case tagSWFFile:
 	default:
-		createTagObj<TagUnknown>(stream, header);
+		createTag<TagUnknown>(stream, header);
 		break;
 	}
 	assert(endpos == stream.tell());
+}
+
+bool SWFDecoder::NeedPaser(SwfTagType type)
+{
+	if (m_mode == modeFull)
+		return true;
+
+	switch (type)
+	{
+	case tagDefineShape:
+	case tagDefineShape2:
+	case tagDefineShape3:
+	case tagDefineShape4:
+		return (m_mode == modeShape);
+	case tagDefineBits:
+	case tagJPEGTables:
+	case tagDefineBitsJPEG2:
+	case tagDefineBitsJPEG3:
+	case tagDefineBitsLossless:
+	case tagDefineBitsLossless2:
+	case tagDefineBitsJPEG4:
+		return (m_mode == modeShape || m_mode == modeImage);
+	default:
+		return false;
+	}
+	return false;
+}
+
+bool SWFDecoder::IsFilterOut(SwfTagType type, UI16 imageID)
+{
+	if (m_imageFilter.empty())
+		return false;
+
+	switch (type)
+	{
+	case tagDefineBits:
+	case tagDefineBitsJPEG2:
+	case tagDefineBitsJPEG3:
+	case tagDefineBitsLossless:
+	case tagDefineBitsLossless2:
+	case tagDefineBitsJPEG4:
+		return (m_imageFilter.find(imageID) == m_imageFilter.end());
+	default:
+		return false;
+	}
+
+	return false;
 }

@@ -19,6 +19,7 @@
 #include <QtWidgets/QMainWindow>
 #include <QtWidgets/QMenu>
 #include <QtWidgets/QMenuBar>
+#include <QtWidgets/QRadioButton>
 #include <QtWidgets/QStatusBar>
 #include <QtWidgets/QTabWidget>
 #include <QtWidgets/QToolBar>
@@ -38,11 +39,16 @@ public:
     QAction *actionChange_Window;
     QAction *actionChange_Object;
     QAction *actionChange_Chest;
+    QAction *actionExportSwf;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout_2;
+    QHBoxLayout *horizontalLayout_2;
+    QRadioButton *rbHome;
+    QRadioButton *rbAlbum;
     PreviewWidget *preview;
     QMenuBar *menuBar;
     QMenu *menu_Room;
+    QMenu *menuTools;
     QToolBar *mainToolBar;
     QStatusBar *statusBar;
     QDockWidget *shipDock;
@@ -71,12 +77,31 @@ public:
         actionChange_Object->setObjectName(QStringLiteral("actionChange_Object"));
         actionChange_Chest = new QAction(QtGuiApplication1Class);
         actionChange_Chest->setObjectName(QStringLiteral("actionChange_Chest"));
+        actionExportSwf = new QAction(QtGuiApplication1Class);
+        actionExportSwf->setObjectName(QStringLiteral("actionExportSwf"));
         centralWidget = new QWidget(QtGuiApplication1Class);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout_2 = new QVBoxLayout(centralWidget);
         verticalLayout_2->setSpacing(6);
         verticalLayout_2->setContentsMargins(11, 11, 11, 11);
         verticalLayout_2->setObjectName(QStringLiteral("verticalLayout_2"));
+        horizontalLayout_2 = new QHBoxLayout();
+        horizontalLayout_2->setSpacing(6);
+        horizontalLayout_2->setObjectName(QStringLiteral("horizontalLayout_2"));
+        rbHome = new QRadioButton(centralWidget);
+        rbHome->setObjectName(QStringLiteral("rbHome"));
+        rbHome->setChecked(true);
+
+        horizontalLayout_2->addWidget(rbHome);
+
+        rbAlbum = new QRadioButton(centralWidget);
+        rbAlbum->setObjectName(QStringLiteral("rbAlbum"));
+
+        horizontalLayout_2->addWidget(rbAlbum);
+
+
+        verticalLayout_2->addLayout(horizontalLayout_2);
+
         preview = new PreviewWidget(centralWidget);
         preview->setObjectName(QStringLiteral("preview"));
 
@@ -88,6 +113,8 @@ public:
         menuBar->setGeometry(QRect(0, 0, 953, 23));
         menu_Room = new QMenu(menuBar);
         menu_Room->setObjectName(QStringLiteral("menu_Room"));
+        menuTools = new QMenu(menuBar);
+        menuTools->setObjectName(QStringLiteral("menuTools"));
         QtGuiApplication1Class->setMenuBar(menuBar);
         mainToolBar = new QToolBar(QtGuiApplication1Class);
         mainToolBar->setObjectName(QStringLiteral("mainToolBar"));
@@ -130,12 +157,14 @@ public:
         QtGuiApplication1Class->addDockWidget(static_cast<Qt::DockWidgetArea>(8), dockWidget_2);
 
         menuBar->addAction(menu_Room->menuAction());
+        menuBar->addAction(menuTools->menuAction());
         menu_Room->addAction(actionChange_Wall);
         menu_Room->addAction(actionChange_Floor);
         menu_Room->addAction(actionChange_Desk);
         menu_Room->addAction(actionChange_Window);
         menu_Room->addAction(actionChange_Object);
         menu_Room->addAction(actionChange_Chest);
+        menuTools->addAction(actionExportSwf);
 
         retranslateUi(QtGuiApplication1Class);
 
@@ -151,7 +180,11 @@ public:
         actionChange_Window->setText(QApplication::translate("QtGuiApplication1Class", "Change &Window", Q_NULLPTR));
         actionChange_Object->setText(QApplication::translate("QtGuiApplication1Class", "Change &Object", Q_NULLPTR));
         actionChange_Chest->setText(QApplication::translate("QtGuiApplication1Class", "Change &Chest", Q_NULLPTR));
+        actionExportSwf->setText(QApplication::translate("QtGuiApplication1Class", "&Export Image From Swf ", Q_NULLPTR));
+        rbHome->setText(QApplication::translate("QtGuiApplication1Class", "Homeport", Q_NULLPTR));
+        rbAlbum->setText(QApplication::translate("QtGuiApplication1Class", "Album", Q_NULLPTR));
         menu_Room->setTitle(QApplication::translate("QtGuiApplication1Class", "Modify &Room", Q_NULLPTR));
+        menuTools->setTitle(QApplication::translate("QtGuiApplication1Class", "&Tools", Q_NULLPTR));
         shipDock->setWindowTitle(QApplication::translate("QtGuiApplication1Class", "Ships", Q_NULLPTR));
     } // retranslateUi
 

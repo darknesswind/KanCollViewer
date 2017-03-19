@@ -75,7 +75,7 @@ size_t LByteStream::readAs(T* pBuf, size_t cnt)
 template <typename T>
 T LByteStream::read()
 {
-	T res = 0;
+	T res{ 0 };
 	readAs(res);
 	return res;
 }
