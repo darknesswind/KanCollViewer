@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ShipDockWidget</class>
+ <widget class="QWidget" name="ShipDockWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>ShipDockWidget</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="leftMargin">
+    <number>1</number>
+   </property>
+   <property name="topMargin">
+    <number>3</number>
+   </property>
+   <property name="rightMargin">
+    <number>3</number>
+   </property>
+   <property name="bottomMargin">
+    <number>1</number>
+   </property>
+   <item>
+    <widget class="QComboBox" name="cmbShipType">
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToMinimumContentsLength</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="cmbModType"/>
+   </item>
+   <item>
+    <widget class="QListWidget" name="fileList">
+     <property name="contextMenuPolicy">
+      <enum>Qt::ActionsContextMenu</enum>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOn</enum>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOff</enum>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QAbstractScrollArea::AdjustToContents</enum>
+     </property>
+     <property name="autoScrollMargin">
+      <number>16</number>
+     </property>
+     <property name="editTriggers">
+      <set>QAbstractItemView::NoEditTriggers</set>
+     </property>
+     <property name="showDropIndicator" stdset="0">
+      <bool>false</bool>
+     </property>
+     <property name="textElideMode">
+      <enum>Qt::ElideNone</enum>
+     </property>
+     <property name="resizeMode">
+      <enum>QListView::Adjust</enum>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>

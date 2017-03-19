@@ -1,0 +1,86 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="GameCache.cpp" />
+    <ClCompile Include="LBitsField.cpp" />
+    <ClCompile Include="LByteStream.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="PreviewWidget.cpp" />
+    <ClCompile Include="KanColl.cpp" />
+    <ClCompile Include="ShipDockWidget.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="SWFDecoder.cpp" />
+    <ClCompile Include="swfstruct.cpp" />
+    <ClCompile Include="GeneratedFiles\qrc_KanColl.cpp">
+      <Filter>GeneratedFiles</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_KanColl.cpp">
+      <Filter>GeneratedFiles\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_PreviewWidget.cpp">
+      <Filter>GeneratedFiles\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Debug\moc_ShipDockWidget.cpp">
+      <Filter>GeneratedFiles\Debug</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_KanColl.cpp">
+      <Filter>GeneratedFiles\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_PreviewWidget.cpp">
+      <Filter>GeneratedFiles\Release</Filter>
+    </ClCompile>
+    <ClCompile Include="GeneratedFiles\Release\moc_ShipDockWidget.cpp">
+      <Filter>GeneratedFiles\Release</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="PreviewWidget.h" />
+    <CustomBuild Include="ShipDockWidget.h" />
+    <CustomBuild Include="KanColl.h" />
+    <CustomBuild Include="KanColl.ui">
+      <Filter>ui</Filter>
+    </CustomBuild>
+    <CustomBuild Include="ShipDockWidget.ui">
+      <Filter>ui</Filter>
+    </CustomBuild>
+    <CustomBuild Include="KanColl.qrc">
+      <Filter>other</Filter>
+    </CustomBuild>
+    <CustomBuild Include="NatvisFile.natvis">
+      <Filter>other</Filter>
+    </CustomBuild>
+    <CustomBuild Include="GameCache.h" />
+    <CustomBuild Include="GeneratedFiles\ui_KanColl.h">
+      <Filter>GeneratedFiles</Filter>
+    </CustomBuild>
+    <CustomBuild Include="GeneratedFiles\ui_ShipDockWidget.h">
+      <Filter>GeneratedFiles</Filter>
+    </CustomBuild>
+    <CustomBuild Include="LBitsField.h" />
+    <CustomBuild Include="LByteStream.h" />
+    <CustomBuild Include="LFile.h" />
+    <CustomBuild Include="SWFDecoder.h" />
+    <CustomBuild Include="swfstruct.h" />
+    <CustomBuild Include="stdafx.h" />
+    <CustomBuild Include="KanColl.user">
+      <Filter>other</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="GeneratedFiles">
+      <UniqueIdentifier>{fe5177db-7532-4dbd-a45d-792ab1aa0130}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui">
+      <UniqueIdentifier>{53e5495f-7900-4553-bb53-5e606ebce6ae}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GeneratedFiles\Debug">
+      <UniqueIdentifier>{f8c396c9-740a-4d0f-9b6d-8bde30499f45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="GeneratedFiles\Release">
+      <UniqueIdentifier>{1a25beb4-f61c-4d70-b14e-58e189dacd00}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="other">
+      <UniqueIdentifier>{99478a5b-5abb-4a39-9441-258eecfc59c4}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
