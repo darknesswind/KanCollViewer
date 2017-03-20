@@ -169,7 +169,7 @@ void PreviewWidget::drawAlbum(QPainter& painter)
 	{
 		ImageShape& shape = m_curShip.images[id];
 		QRectF target = shape.rect;
-		target.moveTo(QPoint(477, 30));
+		target.moveTo(QPoint(470, 25));
 		painter.drawImage(target, shape.img);
 	}
 }
