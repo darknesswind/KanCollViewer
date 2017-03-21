@@ -4,10 +4,13 @@
 PreviewWidget::PreviewWidget(QWidget *parent)
 	: QWidget(parent)
 	, m_pCache(nullptr)
+	, m_preview(s_width, s_height)
 	, m_room(s_width, s_height)
-	, m_mode(pvHome)
+	, m_defaultMode(pvHome)
+	, m_displayMode(pvHome)
 	, m_standImgIdx(0)
 	, m_albumImgIdx(0)
+	, m_bPreviewDirty(true)
 {
 	setFixedSize(s_width, s_height);
 }
@@ -22,10 +25,31 @@ void PreviewWidget::init(GameCache* pCache)
 	m_album = pCache->album();
 }
 
+void PreviewWidget::savePreview()
+{
+	static QDir s_defaultSaveDir = QDir::current();
+
+	QFileDialog dialog;
+	dialog.setFileMode(QFileDialog::AnyFile);
+	dialog.setAcceptMode(QFileDialog::AcceptSave);
+	dialog.setWindowTitle(tr("Save Preview"));
+	dialog.setDirectory(s_defaultSaveDir);
+	dialog.setNameFilter("*.png");
+
+	QStringList files;
+	if (dialog.exec())
+		files = dialog.selectedFiles();
+	if (files.empty())
+		return;
+
+	m_preview.save(files[0], "png");
+	s_defaultSaveDir = dialog.directory();
+}
+
 void PreviewWidget::changeShipImage(const ShipGraphFile& file)
 {
 	m_curShip = m_pCache->loadShipImage(file);
-	repaint();
+	setDirty(true);
 }
 
 void PreviewWidget::updateRoom()
@@ -39,59 +63,99 @@ void PreviewWidget::updateRoom()
 	painter.drawPixmap(196, 0, room.window);
 	painter.drawPixmap(s_width - room.chest.width(), 0, room.chest);
 	painter.drawPixmap(0, s_height - room.desk.height(), room.desk);
+
+	setDirty(true);
 }
 
 void PreviewWidget::paintEvent(QPaintEvent *e)
 {
+	updatePreview();
+
 	QPainter painter(this);
 	painter.setClipRegion(e->region());
-
-	if (m_mode == pvHome)
-		drawRoom(painter);
-	else if (m_mode == pvAlbum)
-		drawAlbum(painter);
-
+	painter.drawPixmap(0, 0, m_preview);
 	e->accept();
 }
 
 void PreviewWidget::switchToHome(bool bActive)
 {
-	if (bActive && m_mode != pvHome)
+	if (bActive && m_defaultMode != pvHome)
 	{
-		m_mode = pvHome;
-		repaint();
+		m_defaultMode = pvHome;
+		setDirty(true);
 	}
 }
 
 void PreviewWidget::switchToAlbum(bool bActive)
 {
-	if (bActive && m_mode != pvAlbum)
+	if (bActive && m_defaultMode != pvAlbum)
 	{
-		m_mode = pvAlbum;
-		repaint();
+		m_defaultMode = pvAlbum;
+		setDirty(true);
+	}
+}
+
+void PreviewWidget::mouseReleaseEvent(QMouseEvent *event)
+{
+	if (event->button() == Qt::LeftButton)
+	{
+		switch (m_displayMode)
+		{
+		case PreviewWidget::pvHome:
+			++m_standImgIdx;
+			break;
+		case PreviewWidget::pvAlbum:
+			++m_albumImgIdx;
+			break;
+		default:
+			return;
+		}
+		setDirty(true);
+	}
+}
+
+void PreviewWidget::updatePreview()
+{
+	if (!m_bPreviewDirty)
+		return;
+
+	m_bPreviewDirty = false;
+	m_preview.fill(Qt::black);
+	QPainter painter(&m_preview);
+	switch (m_defaultMode)
+	{
+	case PreviewWidget::pvHome:
+		drawRoom(painter);
+		break;
+	case PreviewWidget::pvAlbum:
+		drawAlbum(painter);
+		break;
+	default:
+		break;
 	}
 }
 
 void PreviewWidget::drawRoom(QPainter& painter)
 {
-	painter.drawPixmap(0, 0, m_room);
-
-	if (m_curShip.images.isEmpty())
-		return;
-
-	static QPoint defaultPos(328, -62);
+	const static QPoint s_defStandPos(328, -62);
 	const static ShipImage::ShipImageType standImg[2] =
 	{
 		ShipImage::tStand, ShipImage::tStandBroken
 	};
+
+	m_displayMode = pvHome;
+	painter.drawPixmap(0, 0, m_room);
+	if (m_curShip.images.isEmpty())
+		return;
 
 	QPoint pos;
 	int imgCount = m_curShip.images.size();
 	if (imgCount >= 15)	// ∆’Õ®
 	{
 		if (m_curShip.pFile)
-			pos = defaultPos + m_curShip.pFile->pos.boko_n;
+			pos = s_defStandPos + m_curShip.pFile->pos.boko_n;
 
+		m_standImgIdx = m_standImgIdx % ARRAYSIZE(standImg);
 		ImageShape& shape = m_curShip.images[standImg[m_standImgIdx]];
 		QRectF target = shape.rect;
 		target.moveTo(pos);
@@ -115,11 +179,21 @@ void PreviewWidget::drawRoom(QPainter& painter)
 
 void PreviewWidget::drawAlbum(QPainter& painter)
 {
+	const static QPoint s_defTitlePos(26, 30);
+	const static QPoint s_defAlbumPos(470, 25);
+	const static ShipImage::ShipImageType albumImg[][4] =
+	{
+		{ ShipImage::tAlbum, ShipImage::tAlbumBroken, ShipImage::tAlbumFull, ShipImage::tAlbumFullBroken },
+		{ ShipImage::ta5Album, ShipImage::ta5AlbumBroken, ShipImage::ta5AlbumFull, ShipImage::ta5AlbumFullBroken },
+		{ ShipImage::ta6Album, ShipImage::ta6AlbumBroken, ShipImage::ta6AlbumFull, ShipImage::ta6AlbumFullBroken }
+	};
+
+	m_displayMode = pvAlbum;
 	painter.drawPixmap(0, 0, m_album);
 	if (m_curShip.images.isEmpty())
 		return;
 
-	ShipImage::ShipImageType id = (ShipImage::ShipImageType)0;
+	ShipImage::ShipImageType id = (ShipImage::ShipImageType)m_curShip.images.firstKey();
 	int imgCount = m_curShip.images.size();
 	if (imgCount >= 15)	// ∆’Õ®
 	{
@@ -139,17 +213,12 @@ void PreviewWidget::drawAlbum(QPainter& painter)
 	{
 		ImageShape& shape = m_curShip.images[id];
 		QRectF target = shape.rect;
-		target.moveTo(QPoint(26, 30));
+		target.moveTo(s_defTitlePos);
 		painter.drawImage(target, shape.img);
 	}
-
-	const static ShipImage::ShipImageType albumImg[][4] =
-	{
-		{ ShipImage::tAlbum, ShipImage::tAlbumBroken, ShipImage::tAlbumFull, ShipImage::tAlbumFullBroken },
-		{ ShipImage::ta5Album, ShipImage::ta5AlbumBroken, ShipImage::ta5AlbumFull, ShipImage::ta5AlbumFullBroken },
-		{ ShipImage::ta6Album, ShipImage::ta6AlbumBroken, ShipImage::ta6AlbumFull, ShipImage::ta6AlbumFullBroken }
-	};
-	id = (ShipImage::ShipImageType)0;
+	//////////////////////////////////////////////////////////////////////////
+	id = (ShipImage::ShipImageType)m_curShip.images.firstKey();
+	m_albumImgIdx = m_albumImgIdx % ARRAYSIZE(albumImg);
 	if (imgCount >= 15)	// ∆’Õ®
 	{
 		id = albumImg[0][m_albumImgIdx];
@@ -169,8 +238,15 @@ void PreviewWidget::drawAlbum(QPainter& painter)
 	{
 		ImageShape& shape = m_curShip.images[id];
 		QRectF target = shape.rect;
-		target.moveTo(QPoint(470, 25));
+		target.moveTo(s_defAlbumPos);
 		painter.drawImage(target, shape.img);
 	}
+}
+
+void PreviewWidget::setDirty(bool bRepaint)
+{
+	m_bPreviewDirty = true;
+	if (bRepaint)
+		repaint();
 }
 

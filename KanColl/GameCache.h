@@ -11,14 +11,14 @@ struct ShipPosInfo
 	QPoint kaisyu_d;
 	QPoint kaizo_n;		// 改造
 	QPoint kaizo_d;
-	QPoint map_n;		// 海域
+	QPoint map_n;		// 海域 （-53,138）
 	QPoint map_d;
 	QPoint ensyuf_n;	// 演习
 	QPoint ensyuf_d;
-	QPoint ensyue_n;
+	QPoint ensyue_n;	// 演习敌方
 	QPoint battle_n;	// 战斗
 	QPoint battle_d;
-	QPoint weda;
+	QPoint weda;		// 结婚？
 	QPoint wedb;
 };
 struct ShipGraphFile

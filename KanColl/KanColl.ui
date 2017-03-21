@@ -65,6 +65,7 @@
     <property name="title">
      <string>&amp;Tools</string>
     </property>
+    <addaction name="actionSavePreview"/>
     <addaction name="actionExportSwf"/>
    </widget>
    <addaction name="menu_Room"/>
@@ -157,6 +158,11 @@
   <action name="actionExportSwf">
    <property name="text">
     <string>&amp;Export Image From Swf </string>
+   </property>
+  </action>
+  <action name="actionSavePreview">
+   <property name="text">
+    <string>&amp;Save Preview</string>
    </property>
   </action>
  </widget>

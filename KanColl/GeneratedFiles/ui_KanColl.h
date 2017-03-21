@@ -40,6 +40,7 @@ public:
     QAction *actionChange_Object;
     QAction *actionChange_Chest;
     QAction *actionExportSwf;
+    QAction *actionSavePreview;
     QWidget *centralWidget;
     QVBoxLayout *verticalLayout_2;
     QHBoxLayout *horizontalLayout_2;
@@ -79,6 +80,8 @@ public:
         actionChange_Chest->setObjectName(QStringLiteral("actionChange_Chest"));
         actionExportSwf = new QAction(QtGuiApplication1Class);
         actionExportSwf->setObjectName(QStringLiteral("actionExportSwf"));
+        actionSavePreview = new QAction(QtGuiApplication1Class);
+        actionSavePreview->setObjectName(QStringLiteral("actionSavePreview"));
         centralWidget = new QWidget(QtGuiApplication1Class);
         centralWidget->setObjectName(QStringLiteral("centralWidget"));
         verticalLayout_2 = new QVBoxLayout(centralWidget);
@@ -164,6 +167,7 @@ public:
         menu_Room->addAction(actionChange_Window);
         menu_Room->addAction(actionChange_Object);
         menu_Room->addAction(actionChange_Chest);
+        menuTools->addAction(actionSavePreview);
         menuTools->addAction(actionExportSwf);
 
         retranslateUi(QtGuiApplication1Class);
@@ -181,6 +185,7 @@ public:
         actionChange_Object->setText(QApplication::translate("QtGuiApplication1Class", "Change &Object", Q_NULLPTR));
         actionChange_Chest->setText(QApplication::translate("QtGuiApplication1Class", "Change &Chest", Q_NULLPTR));
         actionExportSwf->setText(QApplication::translate("QtGuiApplication1Class", "&Export Image From Swf ", Q_NULLPTR));
+        actionSavePreview->setText(QApplication::translate("QtGuiApplication1Class", "&Save Preview", Q_NULLPTR));
         rbHome->setText(QApplication::translate("QtGuiApplication1Class", "Homeport", Q_NULLPTR));
         rbAlbum->setText(QApplication::translate("QtGuiApplication1Class", "Album", Q_NULLPTR));
         menu_Room->setTitle(QApplication::translate("QtGuiApplication1Class", "Modify &Room", Q_NULLPTR));

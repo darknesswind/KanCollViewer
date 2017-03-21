@@ -260,7 +260,7 @@ void GameCache::collectRoom()
 		QFileInfoList infos = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot);
 		for (auto iter = infos.begin(); iter != infos.end(); ++iter)
 		{
-			if (nameExp.exactMatch(iter->fileName()));
+			if (nameExp.exactMatch(iter->fileName()))
 				return QPixmap(iter->filePath());
 		}
 		return QPixmap();

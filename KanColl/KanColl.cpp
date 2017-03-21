@@ -29,6 +29,7 @@ void KanColl::initMenu()
 	connect(m_ui.actionChange_Chest, SIGNAL(triggered()), this, SLOT(onChangeChest()));
 
 	connect(m_ui.actionExportSwf, SIGNAL(triggered()), this, SLOT(onExportSwf()));
+	connect(m_ui.actionSavePreview, SIGNAL(triggered()), m_ui.preview, SLOT(savePreview()));
 }
 
 void KanColl::initShipDock()

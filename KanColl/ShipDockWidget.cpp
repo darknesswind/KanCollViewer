@@ -61,15 +61,22 @@ void ShipDockWidget::init(GameCache* pCache)
 	m_ui.fileList->addAction(pActExplore);
 	QAction* pActImage = new QAction(tr("Export &image"));
 	m_ui.fileList->addAction(pActImage);
+	QAction* pActUpdate = new QAction(tr("Update &time"));
+	m_ui.fileList->addAction(pActUpdate);
 
 	connect(pActExplore, &QAction::triggered, this, &ShipDockWidget::exploreTo);
 	connect(pActImage, &QAction::triggered, this, &ShipDockWidget::exportImage);
+	connect(pActUpdate, &QAction::triggered, this, &ShipDockWidget::updateTime);
+	connect(this, &ShipDockWidget::hackFileSelected, pActUpdate, &QAction::setEnabled);
 }
 
 void ShipDockWidget::onSelectChanged(QListWidgetItem* current, QListWidgetItem* previous)
 {
 	if (!current) return;
 	ShipFileItem* pItem = static_cast<ShipFileItem*>(current);
+
+	bool bSelHack = (pItem->file().type == ShipGraphFile::tHack);
+	emit hackFileSelected(bSelHack);
 	emit shipSelected(pItem->file());
 }
 
@@ -102,12 +109,19 @@ void ShipDockWidget::onShipTypeFilter(int idx)
 	}
 }
 
-void ShipDockWidget::exploreTo()
+QString ShipDockWidget::getCurrentFile()
 {
 	ShipFileItem* pItem = static_cast<ShipFileItem*>(m_ui.fileList->currentItem());
-	if (!pItem) return;
+	if (!pItem) return QString();
 
-	QString filePath = QString("%1/%2.swf").arg(m_pCache->shipsDir().path(), pItem->fileName());
+	return QString("%1/%2.swf").arg(m_pCache->shipsDir().path(), pItem->fileName());
+}
+
+void ShipDockWidget::exploreTo()
+{
+	QString filePath = getCurrentFile();
+	if (filePath.isEmpty())
+		return;
 
 	QString arg = QString("/select, \"%1\"").arg(filePath.replace('/', '\\'));
 	ShellExecuteW(0, L"open", L"explorer.exe", (WCHAR*)arg.utf16(), NULL, SW_SHOWNORMAL);
@@ -134,4 +148,32 @@ void ShipDockWidget::exportImage()
 		iter->img.save(QString("%1/%2.png").arg(basePath).arg(iter.key()));
 	}
 	ShellExecuteW(0, L"open", L"explorer.exe", (WCHAR*)basePath.replace('/', '\\').utf16(), NULL, SW_SHOWNORMAL);
+}
+
+void ShipDockWidget::updateTime()
+{
+	QString filePath = getCurrentFile();
+	if (filePath.isEmpty())
+		return;
+
+	QFileInfo hackFile(filePath);
+	QFileInfo oriFile(filePath.replace(".hack.", "."));
+
+	if (!hackFile.exists() || !oriFile.exists())
+		return;
+
+	if (oriFile.lastModified() <= hackFile.lastModified())
+		return;
+
+	FILETIME fileTime = { 0 };
+	SYSTEMTIME systime = { 0 };
+	GetSystemTime(&systime);
+	SystemTimeToFileTime(&systime, &fileTime);
+
+	HANDLE hFile = CreateFileW((wchar_t*)hackFile.fileName().utf16(),
+		GENERIC_WRITE, FILE_SHARE_READ, NULL,
+		OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+
+	SetFileTime(hFile, NULL, NULL, &fileTime);
+	CloseHandle(hFile);
 }

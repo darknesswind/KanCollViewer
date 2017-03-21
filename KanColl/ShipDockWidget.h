@@ -17,6 +17,7 @@ public:
 signals:
 	void shipSelected(const ShipGraphFile&);
 	void shipActivated(const ShipGraphFile&);
+	void hackFileSelected(bool b);
 
 public slots:
 	void onSelectChanged(QListWidgetItem* current, QListWidgetItem* previous);
@@ -25,6 +26,10 @@ public slots:
 
 	void exploreTo();
 	void exportImage();
+	void updateTime();
+
+private:
+	QString getCurrentFile();
 
 private:
 	Ui::ShipDockWidget m_ui;

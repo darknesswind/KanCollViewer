@@ -5,6 +5,8 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "KanColl", "KanColl\KanColl.vcxproj", "{B12702AD-ABFB-343A-A199-8E24837244A3}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "LzmaLib", "lzma\C\Util\LzmaLib\LzmaLib.vcxproj", "{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -28,6 +30,7 @@ Global
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x86.ActiveCfg = Debug|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Debug|x86.Build.0 = Debug|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Any CPU.ActiveCfg = Release|Win32
+		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Any CPU.Build.0 = Release|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|Itanium.ActiveCfg = Release|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x64.ActiveCfg = Release|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.Release|x86.ActiveCfg = Release|Win32
@@ -40,6 +43,26 @@ Global
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.ReleaseWithoutAsm|x64.Build.0 = Release|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.ReleaseWithoutAsm|x86.ActiveCfg = Release|Win32
 		{B12702AD-ABFB-343A-A199-8E24837244A3}.ReleaseWithoutAsm|x86.Build.0 = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Debug|Any CPU.Build.0 = Debug|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Debug|Itanium.ActiveCfg = Debug|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Debug|x64.ActiveCfg = Debug|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Debug|x86.ActiveCfg = Debug|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Debug|x86.Build.0 = Debug|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Release|Any CPU.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Release|Any CPU.Build.0 = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Release|Itanium.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Release|x64.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Release|x86.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.Release|x86.Build.0 = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|Any CPU.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|Any CPU.Build.0 = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|Itanium.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|Itanium.Build.0 = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|x64.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|x64.Build.0 = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|x86.ActiveCfg = Release|Win32
+		{BE44FB8F-E7F6-41A2-A63E-E7BF4417900A}.ReleaseWithoutAsm|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
